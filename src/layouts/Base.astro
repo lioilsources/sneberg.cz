@@ -1,0 +1,90 @@
+---
+import '@fontsource-variable/inconsolata';
+import '../styles/global.css';
+import { Image } from 'astro:assets';
+import logo from '../assets/logo.jpg';
+import { site, nav, url } from '../site';
+
+interface Props {
+  title?: string;
+  description?: string;
+  lang?: string;
+}
+
+const { title, description = `${site.name} – ${site.tagline}`, lang = 'en' } = Astro.props;
+const fullTitle = title ? `${title} | ${site.name}` : site.name;
+const path = Astro.url.pathname;
+const isActive = (href?: string) => !!href && url(href) === path;
+const canonical = new URL(path, Astro.site);
+---
+
+<!doctype html>
+<html lang={lang}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{fullTitle}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    <link rel="icon" href={url('/favicon.jpg')} type="image/jpeg" />
+    <link rel="apple-touch-icon" href={url('/apple-touch-icon.jpg')} />
+    <meta property="og:title" content={fullTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content={canonical} />
+    <slot name="head" />
+  </head>
+  <body>
+    <header class="site-header">
+      <a class="logo" href={url('/')} aria-label={site.name}>
+        <Image src={logo} alt={site.name} width={360} densities={[1, 2]} loading="eager" />
+      </a>
+      <button class="nav-toggle" aria-label="Menu" aria-expanded="false" aria-controls="nav">
+        <svg width="22" height="22" viewBox="0 0 22 22" aria-hidden="true">
+          <path d="M2 5h18M2 11h18M2 17h18" stroke="currentColor" stroke-width="1.6" fill="none"></path>
+        </svg>
+      </button>
+      <nav class="nav" id="nav">
+        <ul>
+          {
+            nav.map((item) =>
+              item.children ? (
+                <li class:list={{ active: item.children.some((c) => isActive(c.href)) }}>
+                  <span class="parent" tabindex="0">{item.label}</span>
+                  <ul class="sub">
+                    {item.children.map((c) => (
+                      <li class:list={{ active: isActive(c.href) }}>
+                        <a href={url(c.href!)}>{c.label}</a>
+                      </li>
+                    ))}
+                  </ul>
+                </li>
+              ) : (
+                <li class:list={{ active: isActive(item.href) }}>
+                  <a href={url(item.href!)}>{item.label}</a>
+                </li>
+              ),
+            )
+          }
+        </ul>
+      </nav>
+    </header>
+
+    <main>
+      <slot />
+    </main>
+
+    <footer class="site-footer">
+      Copyright © 2009-{new Date().getFullYear()} Michal Sneberg Photography All Rights Reserved.
+    </footer>
+
+    <script>
+      const toggle = document.querySelector<HTMLButtonElement>('.nav-toggle')!;
+      const menu = document.querySelector<HTMLElement>('#nav')!;
+      toggle.addEventListener('click', () => {
+        const open = menu.classList.toggle('open');
+        toggle.setAttribute('aria-expanded', String(open));
+      });
+    </script>
+  </body>
+</html>

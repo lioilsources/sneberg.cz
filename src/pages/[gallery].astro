@@ -1,0 +1,128 @@
+---
+import { getImage } from 'astro:assets';
+import Base from '../layouts/Base.astro';
+import { galleries, site, type Gallery } from '../site';
+
+export function getStaticPaths() {
+  return galleries.map((gallery) => ({ params: { gallery: gallery.slug }, props: { gallery } }));
+}
+
+interface Props {
+  gallery: Gallery;
+}
+
+const { gallery } = Astro.props;
+
+const photos = await Promise.all(
+  gallery.photos.map(async ({ image, original, caption }) => {
+    const thumb = await getImage({ src: image, width: Math.min(image.width, 900), format: 'webp' });
+    // Photos are shown untouched in the lightbox; only oversized uploads are scaled down.
+    const maxWidth = 2560;
+    const oversized = image.width > maxWidth;
+    const full = oversized
+      ? (await getImage({ src: image, width: maxWidth, format: 'jpeg', quality: 92 })).src
+      : original;
+    const scale = oversized ? maxWidth / image.width : 1;
+    return {
+      thumb,
+      full,
+      width: Math.round(image.width * scale),
+      height: Math.round(image.height * scale),
+      ratio: image.height / image.width,
+      caption,
+    };
+  }),
+);
+---
+
+<Base title={gallery.title} description={`${gallery.title} – ${site.name}, ${site.tagline}`}>
+  <div class="gallery" id="gallery">
+    {
+      photos.map((p, i) => (
+        <a
+          href={p.full}
+          data-width={p.width}
+          data-height={p.height}
+          data-ratio={p.ratio}
+          data-caption={p.caption || undefined}
+          target="_blank"
+        >
+          <img
+            src={p.thumb.src}
+            width={p.thumb.attributes.width}
+            height={p.thumb.attributes.height}
+            alt={p.caption || site.name}
+            loading={i < 8 ? 'eager' : 'lazy'}
+          />
+        </a>
+      ))
+    }
+  </div>
+</Base>
+
+<script>
+  import PhotoSwipeLightbox from 'photoswipe/lightbox';
+  import 'photoswipe/style.css';
+
+  const gallery = document.querySelector<HTMLElement>('#gallery')!;
+  // Keep the original order: the masonry layout below moves links between columns.
+  const links = [...gallery.querySelectorAll<HTMLAnchorElement>('a')];
+
+  // Masonry: put each photo into the currently shortest column, so the order reads left to right.
+  let columns = 0;
+  function layout() {
+    const width = gallery.clientWidth;
+    const count = width >= 1100 ? 4 : width >= 760 ? 3 : width >= 440 ? 2 : 1;
+    if (count === columns) return;
+    columns = count;
+    const cols = Array.from({ length: count }, () => {
+      const el = document.createElement('div');
+      el.className = 'col';
+      return { el, height: 0 };
+    });
+    for (const link of links) {
+      const shortest = cols.reduce((a, b) => (b.height < a.height ? b : a));
+      shortest.el.append(link);
+      shortest.height += Number(link.dataset.ratio);
+    }
+    gallery.replaceChildren(...cols.map((c) => c.el));
+    gallery.classList.add('is-laid-out');
+  }
+  layout();
+  window.addEventListener('resize', layout);
+
+  const lightbox = new PhotoSwipeLightbox({
+    dataSource: links.map((link) => ({
+      src: link.href,
+      width: Number(link.dataset.width),
+      height: Number(link.dataset.height),
+      alt: link.dataset.caption ?? '',
+      caption: link.dataset.caption ?? '',
+    })),
+    showHideAnimationType: 'fade',
+    bgOpacity: 0.95,
+    pswpModule: () => import('photoswipe'),
+  });
+  lightbox.on('uiRegister', () => {
+    lightbox.pswp!.ui!.registerElement({
+      name: 'caption',
+      order: 9,
+      isButton: false,
+      appendTo: 'root',
+      onInit: (el, pswp) => {
+        pswp.on('change', () => {
+          el.textContent = (pswp.currSlide?.data as { caption?: string }).caption ?? '';
+        });
+      },
+    });
+  });
+  lightbox.init();
+
+  links.forEach((link, index) =>
+    link.addEventListener('click', (event) => {
+      if (event.metaKey || event.ctrlKey || event.shiftKey) return;
+      event.preventDefault();
+      lightbox.loadAndOpen(index);
+    }),
+  );
+</script>

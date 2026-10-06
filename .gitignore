@@ -1,0 +1,6 @@
+node_modules/
+dist/
+.astro/
+.DS_Store
+# local copy of the old WordPress site, kept only as a reference
+mirror/

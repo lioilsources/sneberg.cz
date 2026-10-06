@@ -1,0 +1,12 @@
+---
+import { Image } from 'astro:assets';
+import Base from '../layouts/Base.astro';
+import hero from '../assets/hero.jpg';
+---
+
+<Base>
+  <section class="hero">
+    <Image src={hero} alt="" widths={[800, 1200, hero.width]} sizes="100vw" loading="eager" fetchpriority="high" />
+    <h1><span>Welcome to My Site</span></h1>
+  </section>
+</Base>
