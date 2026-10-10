@@ -3,6 +3,27 @@
 Web fotografa Michala Šneberga. Statický web (Astro), který se po každé změně
 v tomto repozitáři sám sestaví a nasadí na GitHub Pages – obvykle do 2 minut.
 
+## Nejjednodušší cesta: napiš, co chceš
+
+V appce **GitHub** otevři tenhle repozitář → **Issues** → **New issue**.
+Napiš `@claude` a za to svůj požadavek, fotky přilož rovnou do issue:
+
+> **Title:** Nové fotky do svateb
+> **Body:** `@claude Přidej tyhle tři fotky na začátek galerie Weddings.`
+
+1. Do minuty ti Claude odpoví, co udělá. Za pár minut napíše, že je hotovo,
+   a přidá odkaz **Create PR** — klikni na něj a potvrď. Vznikne
+   **Pull request**, tedy návrh změny.
+2. Do pár minut se v něm objeví odkaz **Otevřít náhled**: uvidíš web se
+   změnou, ale ostrý web je pořád beze změny. Nelíbí se? Napiš do pull
+   requestu komentář `@claude ještě tohle…` a náhled se obnoví.
+3. Když se ti to líbí, dej **Merge**. Za minutu dvě je změna na ostrém webu.
+
+Jedna věc za issue — půjde to rychleji a líp. Když se na web dostalo něco, co
+tam být nemá: otevři ten pull request a dej **Revert** → **Merge**.
+
+Všechno níž jde dělat i ručně, bez Clauda.
+
 ## Jak přidat fotku do galerie
 
 1. Na GitHubu otevři složku `src/galleries` a v ní galerii, např. `gallery-1`.
